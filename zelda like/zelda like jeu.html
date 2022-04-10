@@ -1,0 +1,447 @@
+<!doctype html>
+    <html lang="en">
+        <head>
+            <meta charset="UTF-8" /><title>Apostasie</title>
+            <script
+            src="//cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+            <style type="text/css"> body { margin: 0; }</style>
+        </head>
+        <body>
+            <script type="text/javascript">
+
+                class Menu extends Phaser.Scene {
+
+                    constructor ()
+                    {
+                        super({ key: 'Menu' });
+                    }
+
+                    preload ()
+                    {
+                        this.load.image('face', 'assets/face.jpg');
+                    }
+
+                    create ()
+                    {
+                        this.face = this.add.image(400, 300, 'face');
+
+                        this.input.manager.enabled = true;
+
+                        this.input.once('pointerdown', function () {
+
+                            this.scene.start('Map1');
+
+                        }, this);
+                    }
+
+                }
+                class Map1 extends Phaser.Scene {
+
+                    constructor ()
+                    {
+                        super({ key: 'Map1' });
+                    }
+
+
+                    preload ()
+                    {
+                        this.load.tilemapTiledJSON('map', 'assets/mapTiled.json');
+                        this.load.image('tiles', 'assets/zonetest.png');
+                        this.load.spritesheet('dude', 'assets/perso.png', { frameWidth: 32, frameHeight: 48 });
+                        this.load.spritesheet('frog', 'assets/frog.png', { frameWidth: 16, frameHeight: 15 });
+                    }
+
+                    create ()
+                    {
+                        const carte = this.add.tilemap('map');
+
+                        const tileset = carte.addTilesetImage(
+                            "zonetest",
+                            "tiles"
+                        );
+
+                        const sol = carte.createLayer(
+                            'ground',
+                            tileset
+                        );
+
+                        const mur = carte.createLayer(
+                            'wall',
+                            tileset
+                        );
+
+                        const pont = carte.createLayer(
+                            'pont',
+                            tileset
+                        );
+
+                        const chute = carte.createLayer(
+                            'slidingGround',
+                            tileset
+                        );
+
+                        mur.setCollisionByProperty({ collides:true })
+
+                        const debugGraphics=this.add.graphics().setAlpha(0.7)
+
+                        mur.renderDebug(debugGraphics, {
+                            tileColor: null,
+                            collidingTileColor: new Phaser.Display.Color(243, 234, 48, 255),
+                            faceColor: new Phaser.Display.Color(40, 39, 37, 255)
+                        })
+
+                        const frog = this.physics.add.sprite(1150, 200, 'frog');
+                        
+
+                        this.anims.create({
+                            key: 'frogright',
+                            frames: this.anims.generateFrameNames('frog', { start: 3, end: 5 }),
+                            frameRate: 10,
+                            repeat: -1
+                        });
+
+                        this.anims.create({
+                            key: 'frogleft',
+                            frames: this.anims.generateFrameNames('frog', { start: 0, end: 2 }),
+                            frameRate: 10,
+                            repeat: -1
+                        });
+
+                        this.anims.create({
+                            key: 'frogdown',
+                            frames: this.anims.generateFrameNames('frog', { start: 6, end: 8 }),
+                            frameRate: 10,
+                            repeat: -1
+                        });
+
+                        this.anims.create({
+                            key: 'frogup',
+                            frames: this.anims.generateFrameNames('frog', { start: 9, end: 11 }),
+                            frameRate: 10,
+                            repeat: -1
+                        });
+
+                        
+
+                        
+                        
+                        //  A simple background for our game
+                        this.cameras.main.setBounds(0, 0, 5120 * 2, 4096 * 2);
+                        this.physics.world.setBounds(0, 0, 5120 * 2, 4096 * 2);
+
+
+                        // The player and its settings
+                        player = this.physics.add.sprite(1250, 0, 'dude');
+
+                        //  Player physics properties. Give the little guy a slight bounce.
+                        player.setBounce(0.2);
+                        player.setCollideWorldBounds(true);
+
+                        //  Our player animations, turning, walking left and walking right.
+                        this.anims.create({
+                            key: 'left',
+                            frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+                            frameRate: 10,
+                            repeat: -1
+                        });
+
+                        this.anims.create({
+                            key: 'turn',
+                            frames: [ { key: 'dude', frame: 4 } ],
+                            frameRate: 20
+                        });
+
+                        this.anims.create({
+                            key: 'right',
+                            frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+                            frameRate: 10,
+                            repeat: -1
+                        });
+
+                        //  Input Events
+                        cursors = this.input.keyboard.createCursorKeys();
+
+
+                        this.physics.add.collider(player, mur);
+
+                        
+
+                        this.cameras.main.startFollow(player, true, 0.05, 0.05);
+
+                        var IKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I);
+                        var spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+                        if (player.body.touching.down.mur | player.body.touching.right.mur) {
+
+                            this.scene.start('Map2');
+
+                        }
+                    }
+
+                    update ()
+                    {
+                        player.body.setVelocity(0);
+
+                        if (gameOver)
+                        {
+                            return;
+                        }
+                        else
+                        {
+                            
+                            if(cursors.up.isDown)
+                            {
+                                player.setVelocityY(-160)
+
+                            }
+                            else if(cursors.down.isDown)
+                            {
+                                player.setVelocityY(160)
+                            }
+
+                            if (cursors.left.isDown)
+                            {
+                                player.setVelocityX(-160);
+
+                                player.anims.play('left', true);
+                            }
+                            else if (cursors.right.isDown)
+                            {
+                                player.setVelocityX(160);
+
+                                player.anims.play('right', true);
+                            }
+
+                            else
+                            {
+                                player.setVelocityX(0);
+
+                                player.anims.play('turn');
+                            }
+
+                            
+                            
+
+                            if (player.body.touching.down.mur | player.body.touching.right.mur)
+                            {
+                                this.scene.start('Map2');
+
+                            }
+
+
+                        }
+
+                        
+    
+                    }
+
+                    
+                }
+
+                class Map2 extends Phaser.Scene {
+
+                    constructor ()
+                    {
+                        super({ key: 'Map2' });
+                    }
+
+                    preload ()
+                    {
+                        this.load.tilemapTiledJSON('map2', 'assets/mapTiled2.json');
+                        this.load.image('tiles', 'assets/zonetest.png');
+                        this.load.spritesheet('dude', 'assets/perso.png', { frameWidth: 32, frameHeight: 48 });
+                    }
+
+                    create ()
+                    {
+                        const carte = this.add.tilemap('map2');
+
+                        const tileset = carte.addTilesetImage(
+                            "zonetest",
+                            "tiles"
+                        );
+
+                        const sol = carte.createLayer(
+                            'ground',
+                            tileset
+                        );
+
+                        const mur = carte.createLayer(
+                            'wall',
+                            tileset
+                        );
+
+                        const pont = carte.createLayer(
+                            'pont',
+                            tileset
+                        );
+
+                        const chute = carte.createLayer(
+                            'slidingGround',
+                            tileset
+                        );
+
+                        mur.setCollisionByProperty({ collides:true })
+
+                        const debugGraphics=this.add.graphics().setAlpha(0.7)
+
+                        mur.renderDebug(debugGraphics, {
+                            tileColor: null,
+                            collidingTileColor: new Phaser.Display.Color(243, 234, 48, 255),
+                            faceColor: new Phaser.Display.Color(40, 39, 37, 255)
+                        })
+
+                        const frog = this.physics.add.sprite(1150, 200, 'frog');
+                        
+
+                        this.anims.create({
+                            key: 'frogright',
+                            frames: this.anims.generateFrameNames('frog', { start: 3, end: 5 }),
+                            frameRate: 10,
+                            repeat: -1
+                        });
+
+                        this.anims.create({
+                            key: 'frogleft',
+                            frames: this.anims.generateFrameNames('frog', { start: 0, end: 2 }),
+                            frameRate: 10,
+                            repeat: -1
+                        });
+
+                        this.anims.create({
+                            key: 'frogdown',
+                            frames: this.anims.generateFrameNames('frog', { start: 6, end: 8 }),
+                            frameRate: 10,
+                            repeat: -1
+                        });
+
+                        this.anims.create({
+                            key: 'frogup',
+                            frames: this.anims.generateFrameNames('frog', { start: 9, end: 11 }),
+                            frameRate: 10,
+                            repeat: -1
+                        });
+
+                        
+
+                        
+                        
+                        //  A simple background for our game
+                        this.cameras.main.setBounds(0, 0, 5120 * 2, 4096 * 2);
+                        this.physics.world.setBounds(0, 0, 5120 * 2, 4096 * 2);
+
+
+                        // The player and its settings
+                        player = this.physics.add.sprite(1250, 0, 'dude');
+
+                        //  Player physics properties. Give the little guy a slight bounce.
+                        player.setBounce(0.2);
+                        player.setCollideWorldBounds(true);
+
+                        //  Our player animations, turning, walking left and walking right.
+                        this.anims.create({
+                            key: 'left',
+                            frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+                            frameRate: 10,
+                            repeat: -1
+                        });
+
+                        this.anims.create({
+                            key: 'turn',
+                            frames: [ { key: 'dude', frame: 4 } ],
+                            frameRate: 20
+                        });
+
+                        this.anims.create({
+                            key: 'right',
+                            frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+                            frameRate: 10,
+                            repeat: -1
+                        });
+
+                        //  Input Events
+                        cursors = this.input.keyboard.createCursorKeys();
+
+
+                        this.physics.add.collider(player, mur);
+
+                        
+
+                        this.cameras.main.startFollow(player, true, 0.05, 0.05);
+
+                        var IKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I);
+                        var spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+                    }
+
+                    update ()
+                    {
+                        player.body.setVelocity(0);
+
+                        if (gameOver)
+                        {
+                            return;
+                        }
+                        else
+                        {
+                            
+                            if(cursors.up.isDown)
+                            {
+                                player.setVelocityY(-160)
+
+                            }
+                            else if(cursors.down.isDown)
+                            {
+                                player.setVelocityY(160)
+                            }
+
+                            if (cursors.left.isDown)
+                            {
+                                player.setVelocityX(-160);
+
+                                player.anims.play('left', true);
+                            }
+                            else if (cursors.right.isDown)
+                            {
+                                player.setVelocityX(160);
+
+                                player.anims.play('right', true);
+                            }
+
+                            else
+                            {
+                                player.setVelocityX(0);
+
+                                player.anims.play('turn');
+                            }
+
+                        }
+                    }
+
+                }
+                var config = {
+                    type: Phaser.AUTO,
+                    width: 1920,
+                    height: 1080,
+                    physics: {
+                        default: 'arcade',
+                        arcade: {
+                            debug: true
+                        }
+                    },
+                    scene: [ Menu,Map1,Map2]
+                };
+
+                var player;
+                var stars;
+                var bombs;
+                var platforms;
+                var cursors;
+                var score = 0;
+                var gameOver = false;
+                var scoreText;
+
+                var game = new Phaser.Game(config);
+
+            </script>
+        </body>
+    </html>
